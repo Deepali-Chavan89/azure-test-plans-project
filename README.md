@@ -39,14 +39,6 @@ Progress Reports & Bug Tracking
 
 ---
 
-# 📌 Recommended Repository Name
-
-```bash id="0itqnh"
-azure-test-plans-project
-```
-
----
-
 # 📌 Prerequisites
 
 ## Install Required Tools
