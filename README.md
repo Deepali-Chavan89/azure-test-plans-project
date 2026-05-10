@@ -277,22 +277,120 @@ Azure DevOps → Test Plans
 
 ---
 
-# 📌 Step 14 — Create Test Plan
+# 📌 Step 14 — Create Test Plan Manually in Azure DevOps
 
-Click:
+## Navigation
 
-```text id="prj69r"
-New Test Plan
+```text
+Azure DevOps → atul-kamble / project → Test Plans → Test plans → New Test Plan
 ```
 
 ---
 
-## Example
+## Step-by-Step
 
-```text id="j8mtn2"
-Name: WebApp Testing
-Area Path: Azure-TestPlans-Project
-Iteration: Sprint 1
+### 1. Open Test Plans
+
+- Go to your Azure DevOps project: `https://dev.azure.com/atul-kamble/project`
+- In the left sidebar click **Test Plans**
+- Click **Test plans** (top menu item)
+
+### 2. Click "+ New Test Plan"
+
+A dialog box opens.
+
+### 3. Fill in the Details
+
+| Field | Value to enter |
+| --- | --- |
+| **Name** | `WebApp Testing` |
+| **Area path** | `project` (select from dropdown — must match the team's area) |
+| **Iteration** | `project\Sprint 1` (or current iteration) |
+| **Start date** | Today's date |
+| **End date** | Sprint end date |
+
+> ⚠️ **Important:** The **Area path** must be one owned by the project's default team.
+> Go to **Project Settings → Boards → Team → Areas** to see which paths the team owns.
+> If you pick an unowned area path, test runs will fail with _"area path is not owned by this project's default team"_.
+
+### 4. Click **Create**
+
+The new test plan opens automatically.
+
+---
+
+## Add a Test Suite inside the Plan
+
+### 5. Click "+ Suite" → "Static suite"
+
+| Field | Value |
+| --- | --- |
+| **Suite name** | `Automated Tests` |
+
+Click **Create**.
+
+---
+
+## Add Test Cases to the Suite
+
+### 6. Click "+ New Test Case"
+
+| Field | Value |
+| --- | --- |
+| **Title** | `Verify Google Homepage` |
+| **Steps – Action** | Open browser, Navigate to https://www.google.com, Verify page title |
+| **Steps – Expected** | Browser opens, Page loads, Title contains "Google" |
+| **Priority** | 2 |
+| **Assigned To** | Your name |
+| **Area path** | `project` |
+
+Click **Save & Close**.
+
+---
+
+## Assign Configurations
+
+### 7. Select the test case → Click "Column options" → Enable "Configuration"
+
+Default configuration: **Windows 10** (already exists in your project).
+
+---
+
+## Link an Automated Test to a Test Case
+
+### 8. Open a Test Case → go to "Associated Automation" tab
+
+| Field | Value |
+| --- | --- |
+| **Automation status** | Automated |
+| **Test method** | `tests.test_google::test_google_title` |
+
+> This links the pytest test so pipeline results automatically appear inside the Test Case.
+
+---
+
+## Verify the Plan is Visible
+
+Navigate to:
+
+```text
+Test Plans → Progress report
+```
+
+You should see **WebApp Testing** with test points populated after the next pipeline run.
+
+---
+
+## Quick Reference: Manual Test Plan Setup Checklist
+
+```text
+[ ] Created Test Plan "WebApp Testing"  (area path = project)
+[ ] Created Static Suite "Automated Tests" inside the plan
+[ ] Added Test Cases with steps and expected results
+[ ] Set Area Path = "project" on every Test Case work item
+[ ] Assigned testers
+[ ] Verified configuration is "Windows 10"
+[ ] Pushed code → pipeline ran → results appeared in Runs tab
 ```
 
 ---
