@@ -35,8 +35,12 @@ steps:
     ADO_PAT: $(System.AccessToken)
     ADO_ORG_URL: https://dev.azure.com/atul-kamble
     ADO_PROJECT: project
-    ADO_TEST_PLAN_NAME: Automated Test Plan
+    ADO_TEST_PLAN_NAME: WebApp Testing
     ADO_TEST_SUITE_NAME: Automated Tests
+    # ADO_AREA_PATH defaults to ADO_PROJECT value ("project") which is owned
+    # by the project's default team. Override here only if your team uses a
+    # custom area path, e.g. "project\MyTeam".
+    ADO_AREA_PATH: project
 
 - task: PublishTestResults@2
   inputs:

@@ -6,13 +6,14 @@ Usage
 -----
 Set these environment variables (or pipeline variables) before running pytest:
 
-  ADO_PAT            PAT with "Test Plans" read/write + "Work Items" read/write.
-                     In Azure Pipelines use $(System.AccessToken) – see
-                     azure-pipelines.yml for the env mapping.
-  ADO_ORG_URL        https://dev.azure.com/atul-kamble   (default)
-  ADO_PROJECT        project                             (default)
-  ADO_TEST_PLAN_NAME Automated Test Plan                 (default)
-  ADO_TEST_SUITE_NAME Automated Tests                    (default)
+  ADO_PAT             PAT with "Test Plans" read/write + "Work Items" read/write.
+                      In Azure Pipelines use $(System.AccessToken) – see
+                      azure-pipelines.yml for the env mapping.
+  ADO_ORG_URL         https://dev.azure.com/atul-kamble   (default)
+  ADO_PROJECT         project                             (default)
+  ADO_TEST_PLAN_NAME  WebApp Testing                      (default – matches existing plan)
+  ADO_TEST_SUITE_NAME Automated Tests                     (default)
+  ADO_AREA_PATH       Area path owning the default team   (defaults to ADO_PROJECT)
 
 Optional marker
 ---------------
@@ -91,8 +92,9 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         org_url=os.environ.get("ADO_ORG_URL", "https://dev.azure.com/atul-kamble"),
         project=os.environ.get("ADO_PROJECT", "project"),
         pat=pat,
-        plan_name=os.environ.get("ADO_TEST_PLAN_NAME", "Automated Test Plan"),
+        plan_name=os.environ.get("ADO_TEST_PLAN_NAME", "WebApp Testing"),
         suite_name=os.environ.get("ADO_TEST_SUITE_NAME", "Automated Tests"),
+        area_path=os.environ.get("ADO_AREA_PATH") or os.environ.get("ADO_PROJECT", "project"),
     )
 
     try:

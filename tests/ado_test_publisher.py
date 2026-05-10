@@ -9,11 +9,12 @@ Uses the Azure DevOps REST API to:
   5. Post each test outcome to that run
 
 Required environment variables (set in azure-pipelines.yml or locally):
-  ADO_PAT            Personal Access Token (or $(System.AccessToken) in pipelines)
-  ADO_ORG_URL        https://dev.azure.com/<organisation>   (default: atul-kamble)
-  ADO_PROJECT        Project name                           (default: project)
-  ADO_TEST_PLAN_NAME Test Plan name                         (default: Automated Test Plan)
-  ADO_TEST_SUITE_NAME Test Suite name                       (default: Automated Tests)
+  ADO_PAT             Personal Access Token (or $(System.AccessToken) in pipelines)
+  ADO_ORG_URL         https://dev.azure.com/<organisation>   (default: atul-kamble)
+  ADO_PROJECT         Project name                           (default: project)
+  ADO_TEST_PLAN_NAME  Test Plan name                         (default: WebApp Testing)
+  ADO_TEST_SUITE_NAME Test Suite name                        (default: Automated Tests)
+  ADO_AREA_PATH       Area path owning the default team      (default: project)
 """
 
 import base64
@@ -46,9 +47,13 @@ class ADOTestPublisher:
         pat: str,
         plan_name: str,
         suite_name: str,
+        area_path: Optional[str] = None,
     ) -> None:
         self.plan_name = plan_name
         self.suite_name = suite_name
+        # area_path must be owned by the project's default team or ADO rejects
+        # plan-based test runs with "area path not owned by this project's default team".
+        self._area_path = area_path or project
         self._base = f"{org_url.rstrip('/')}/{project}/_apis"
         token = base64.b64encode(f":{pat}".encode()).decode()
         self._headers = {
@@ -108,6 +113,7 @@ class ADOTestPublisher:
             "test/plans",
             {
                 "name": self.plan_name,
+                "areaPath": self._area_path,
                 "startDate": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             },
         )
@@ -153,7 +159,10 @@ class ADOTestPublisher:
 
     def create_test_case(self, title: str) -> int:
         """Create a new Test Case work item and return its ID."""
-        patch_doc = [{"op": "add", "path": "/fields/System.Title", "value": title}]
+        patch_doc = [
+            {"op": "add", "path": "/fields/System.Title", "value": title},
+            {"op": "add", "path": "/fields/System.AreaPath", "value": self._area_path},
+        ]
         resp = requests.post(
             f"{self._base}/wit/workitems/$Test Case",
             headers={**self._headers, "Content-Type": "application/json-patch+json"},
