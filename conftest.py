@@ -86,7 +86,13 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         )
         return
 
-    from tests.ado_test_publisher import ADOTestPublisher
+    import importlib.util as _ilu
+    import pathlib as _pl
+    _publisher_path = _pl.Path(__file__).parent / "tests" / "ado_test_publisher.py"
+    _spec = _ilu.spec_from_file_location("ado_test_publisher", _publisher_path)
+    _mod = _ilu.module_from_spec(_spec)
+    _spec.loader.exec_module(_mod)
+    ADOTestPublisher = _mod.ADOTestPublisher
 
     publisher = ADOTestPublisher(
         org_url=os.environ.get("ADO_ORG_URL", "https://dev.azure.com/atul-kamble"),
