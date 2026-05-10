@@ -4,6 +4,17 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
+# ---------------------------------------------------------------------------
+# Pipeline variables
+# ---------------------------------------------------------------------------
+# $(System.AccessToken) is the built-in pipeline identity token.
+# Grant it "Test Plans – Read & Write" and "Work Items – Read & Write" under:
+#   Project Settings → Pipelines → <pipeline name> → Security
+#
+# To use a Personal Access Token (PAT) instead, add a secret pipeline variable
+# named ADO_PAT (mark it as "secret") and reference it as $(ADO_PAT) below.
+# ---------------------------------------------------------------------------
+
 steps:
 
 - task: UsePythonVersion@0
@@ -18,6 +29,14 @@ steps:
 - script: |
     pytest tests/ --junitxml=test-results.xml
   displayName: Execute Selenium Tests
+  env:
+    # Built-in token – no extra secrets needed.
+    # Replace with $(ADO_PAT) if you prefer a dedicated PAT.
+    ADO_PAT: $(System.AccessToken)
+    ADO_ORG_URL: https://dev.azure.com/atul-kamble
+    ADO_PROJECT: project
+    ADO_TEST_PLAN_NAME: Automated Test Plan
+    ADO_TEST_SUITE_NAME: Automated Tests
 
 - task: PublishTestResults@2
   inputs:

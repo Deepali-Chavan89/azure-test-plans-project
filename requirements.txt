@@ -1,4 +1,5 @@
 flask
 pytest
+requests
 selenium
 webdriver-manager
