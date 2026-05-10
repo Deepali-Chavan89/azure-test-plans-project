@@ -58,8 +58,8 @@ jobs:
       # conftest.py reads ADO_PAT to authenticate REST API calls.
       # SYSTEM_ACCESSTOKEN is the job-level variable set above.
       ADO_PAT: $(SYSTEM_ACCESSTOKEN)
-      ADO_ORG_URL: https://dev.azure.com/atul-kamble
-      ADO_PROJECT: project
+      ADO_ORG_URL: https://dev.azure.com/Deepali-Chavan89
+      ADO_PROJECT: MyProject
       ADO_TEST_PLAN_NAME: WebApp Testing
       ADO_TEST_SUITE_NAME: Automated Tests
       # Must match an area path owned by the project's default team.
