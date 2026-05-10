@@ -5,45 +5,71 @@ pool:
   vmImage: ubuntu-latest
 
 # ---------------------------------------------------------------------------
-# Pipeline variables
+# HOW RESULTS REACH Test Plans → Runs
 # ---------------------------------------------------------------------------
-# $(System.AccessToken) is the built-in pipeline identity token.
-# Grant it "Test Plans – Read & Write" and "Work Items – Read & Write" under:
-#   Project Settings → Pipelines → <pipeline name> → Security
+# conftest.py calls the Azure DevOps REST API at the end of every pytest run.
+# It creates/updates Test Cases, creates an automated Test Run, and posts
+# outcomes directly into the "WebApp Testing" Test Plan.
 #
-# To use a Personal Access Token (PAT) instead, add a secret pipeline variable
-# named ADO_PAT (mark it as "secret") and reference it as $(ADO_PAT) below.
+# ONE-TIME SETUP (do this once in the ADO UI):
+#   1. Project Settings → Pipelines → [this pipeline] → Security
+#      Grant "Build Service (atul-kamble)" these permissions:
+#        • Manage test plans           → Allow
+#        • Manage test suites          → Allow
+#        • View test runs              → Allow
+#        • Create test runs            → Allow
+#        • Manage test configurations  → Allow
+#        • Edit work items in this node → Allow   (for Test Case creation)
+#   2. Pipeline editor → ⋮ (three dots) → Triggers →
+#      Enable "Allow scripts to access the OAuth token"
+#      (This lets $(System.AccessToken) work inside bash scripts.)
 # ---------------------------------------------------------------------------
 
-steps:
+jobs:
+- job: Test
+  displayName: Run Tests and Publish to Test Plans
 
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.x'
+  # Pass the built-in OAuth token to every script step in this job.
+  # Combined with the permissions granted above, conftest.py can call
+  # the Test Plans REST API without a separate PAT.
+  variables:
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 
-- script: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-  displayName: Install Dependencies
+  steps:
 
-- script: |
-    pytest tests/ --junitxml=test-results.xml
-  displayName: Execute Selenium Tests
-  env:
-    # Built-in token – no extra secrets needed.
-    # Replace with $(ADO_PAT) if you prefer a dedicated PAT.
-    ADO_PAT: $(System.AccessToken)
-    ADO_ORG_URL: https://dev.azure.com/atul-kamble
-    ADO_PROJECT: project
-    ADO_TEST_PLAN_NAME: WebApp Testing
-    ADO_TEST_SUITE_NAME: Automated Tests
-    # ADO_AREA_PATH defaults to ADO_PROJECT value ("project") which is owned
-    # by the project's default team. Override here only if your team uses a
-    # custom area path, e.g. "project\MyTeam".
-    ADO_AREA_PATH: project
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
 
-- task: PublishTestResults@2
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: 'test-results.xml'
-    failTaskOnFailedTests: true
+  - script: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    displayName: Install Dependencies
+
+  # continueOnError: true — ensures PublishTestResults still runs when
+  # tests fail (exit code 1).  conftest.py's pytest_sessionfinish hook
+  # has already called the REST API publisher before pytest exits.
+  - script: |
+      pytest tests/ --junitxml=test-results.xml -v 2>&1
+      echo "##[debug] pytest exit code: $?"
+    displayName: Execute Selenium Tests and Publish to Test Plans
+    continueOnError: true
+    env:
+      # conftest.py reads ADO_PAT to authenticate REST API calls.
+      # SYSTEM_ACCESSTOKEN is the job-level variable set above.
+      ADO_PAT: $(SYSTEM_ACCESSTOKEN)
+      ADO_ORG_URL: https://dev.azure.com/atul-kamble
+      ADO_PROJECT: project
+      ADO_TEST_PLAN_NAME: WebApp Testing
+      ADO_TEST_SUITE_NAME: Automated Tests
+      # Must match an area path owned by the project's default team.
+      ADO_AREA_PATH: project
+
+  - task: PublishTestResults@2
+    displayName: Publish JUnit Results to Pipeline
+    condition: always()
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: 'test-results.xml'
+      testRunTitle: 'WebApp Testing – Selenium'
+      failTaskOnFailedTests: true

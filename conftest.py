@@ -106,7 +106,9 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     try:
         publisher.publish(results)
         print(
-            f"\nResults for {len(results)} test(s) published to Azure DevOps Test Plans."
+            f"\n##[section]Azure Test Plans: {len(results)} result(s) published to "
+            f"plan '{publisher.plan_name}' → suite '{publisher.suite_name}'."
         )
     except Exception as exc:  # noqa: BLE001
-        logger.warning("Could not publish results to Azure DevOps: %s", exc)
+        # Print as a pipeline warning so it is visible in the job log.
+        print(f"\n##[warning]Could not publish results to Azure DevOps Test Plans: {exc}")
